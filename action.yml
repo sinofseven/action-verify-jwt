@@ -1,0 +1,84 @@
+name: action-verify-jwt
+
+description: verifying jwt token
+
+inputs:
+  token:
+    description: jwt token
+    required: true
+
+  audience:
+    description: oidc audience
+    required: false
+
+  jwks-url:
+    description: jwks url
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare
+      shell: bash
+      run: |
+        EXECUTION_UUID=$(uuidgen)
+        echo "EXECUTION_UUID=$EXECUTION_UUID" >> $GITHUB_ENV
+
+        mkdir -p "${RUNNER_TEMP}/${EXECUTION_UUID}/"{bin,jwt-cli,oidc-jwks-converter,space}
+        echo "${RUNNER_TEMP}/${EXECUTION_UUID}/bin" >> $GITHUB_PATH
+
+    - name: Download jwt-cli
+      working-directory: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/jwt-cli
+      shell: bash
+      env:
+        DESTINATION_DIR: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/bin/
+        PACKAGE_URL: https://github.com/mike-engel/jwt-cli/releases/download/6.2.0/jwt-linux-musl.tar.gz
+      run: |
+        FILENAME=$(basename "${PACKAGE_URL}")
+
+        curl -OL "${PACKAGE_URL}"
+        tar xf "${FILENAME}"
+
+        mv jwt "${DESTINATION_DIR}"
+
+    - name: Download oidc-jwks-converter
+      working-directory: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/oidc-jwks-converter
+      shell: bash
+      env:
+        DESTINATION_DIR: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/bin/
+        PACKAGE_URL: https://github.com/sinofseven/oidc-jwks-converter/releases/download/v0.1.0/oidc-jwks-converter_v0.1.0_x86_64-unknown-linux-musl.zip
+      run: |
+        FILENAME=$(basename "${PACKAGE_URL}")
+        STEM=${FILENAME%.zip}
+
+        curl -OL "${PACKAGE_URL}"
+        unzip "${FILENAME}"
+
+        mv "${STEM}/oidc-jwks-converter" "${DESTINATION_DIR}"
+
+    - name: Verify
+      working-directory: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/space
+      shell: bash
+      env:
+        JWKS_URL: ${{ inputs.jwks-url }}
+        TOKEN: ${{ inputs.token }}
+      run: |
+        oidc-jwks-converter "$JWKS_URL"
+        kid=$(jwt decode --json "$TOKEN" | jq -r '.header.kid')
+        jwt decode --secret "@${kid}.pem" "$TOKEN" > /dev/null
+
+    - name: Verify Audience
+      if: ${{ inputs.audience != '' }}
+      shell: bash
+      env:
+        INPUT_AUDIENCE: ${{ inputs.audience }}
+        INPUT_TOKEN: ${{ inputs.token }}
+      run: |
+        aud_match=$(jwt decode --json "$INPUT_TOKEN" | jq -r --arg expected "$INPUT_AUDIENCE" '
+          .payload.aud |
+          if type == "array" then any(. == $expected) else . == $expected end
+        ')
+        if [ "$aud_match" != "true" ]; then
+          echo "Error: audience mismatch. Expected '$INPUT_AUDIENCE'"
+          exit 1
+        fi
