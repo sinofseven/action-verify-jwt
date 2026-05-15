@@ -34,12 +34,16 @@ runs:
         DESTINATION_DIR: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/bin/
         PACKAGE_URL: https://github.com/mike-engel/jwt-cli/releases/download/6.2.0/jwt-linux-musl.tar.gz
       run: |
-        FILENAME=$(basename "${PACKAGE_URL}")
+        if command -v jwt >/dev/null 2>&1; then
+          echo "jwt-cli is already installed, skipping download"
+        else
+          FILENAME=$(basename "${PACKAGE_URL}")
 
-        curl -OL "${PACKAGE_URL}"
-        tar xf "${FILENAME}"
+          curl -OL "${PACKAGE_URL}"
+          tar xf "${FILENAME}"
 
-        mv jwt "${DESTINATION_DIR}"
+          mv jwt "${DESTINATION_DIR}"
+        fi
 
     - name: Download oidc-jwks-converter
       working-directory: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/oidc-jwks-converter
@@ -48,13 +52,17 @@ runs:
         DESTINATION_DIR: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/bin/
         PACKAGE_URL: https://github.com/sinofseven/oidc-jwks-converter/releases/download/v0.1.0/oidc-jwks-converter_v0.1.0_x86_64-unknown-linux-musl.zip
       run: |
-        FILENAME=$(basename "${PACKAGE_URL}")
-        STEM=${FILENAME%.zip}
+        if command -v oidc-jwks-converter >/dev/null 2>&1; then
+          echo "oidc-jwks-converter is already installed, skipping download"
+        else
+          FILENAME=$(basename "${PACKAGE_URL}")
+          STEM=${FILENAME%.zip}
 
-        curl -OL "${PACKAGE_URL}"
-        unzip "${FILENAME}"
+          curl -OL "${PACKAGE_URL}"
+          unzip "${FILENAME}"
 
-        mv "${STEM}/oidc-jwks-converter" "${DESTINATION_DIR}"
+          mv "${STEM}/oidc-jwks-converter" "${DESTINATION_DIR}"
+        fi
 
     - name: Verify
       working-directory: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/space
