@@ -17,7 +17,7 @@ A GitHub Action that verifies a JWT token using a JWKS endpoint. Useful for vali
 ### Basic — verify signature only
 
 ```yaml
-- uses: sinofseven/action-verify-jwt@v1.1.0
+- uses: sinofseven/action-verify-jwt@v1.1.1
   with:
     token: ${{ steps.get-token.outputs.token }}
     jwks-url: https://token.actions.githubusercontent.com/.well-known/jwks
@@ -26,7 +26,7 @@ A GitHub Action that verifies a JWT token using a JWKS endpoint. Useful for vali
 ### With audience validation
 
 ```yaml
-- uses: sinofseven/action-verify-jwt@v1.1.0
+- uses: sinofseven/action-verify-jwt@v1.1.1
   with:
     token: ${{ steps.get-token.outputs.token }}
     jwks-url: https://token.actions.githubusercontent.com/.well-known/jwks
@@ -50,7 +50,7 @@ jobs:
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Verify token
-        uses: sinofseven/action-verify-jwt@v1.1.0
+        uses: sinofseven/action-verify-jwt@v1.1.1
         with:
           token: ${{ steps.get-token.outputs.token }}
           jwks-url: https://token.actions.githubusercontent.com/.well-known/jwks
