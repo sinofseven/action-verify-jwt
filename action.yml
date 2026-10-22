@@ -50,7 +50,7 @@ runs:
       shell: bash
       env:
         DESTINATION_DIR: ${{ runner.temp }}/${{ env.EXECUTION_UUID }}/bin/
-        PACKAGE_URL: https://github.com/sinofseven/oidc-jwks-converter/releases/download/v0.1.0/oidc-jwks-converter_v0.1.0_x86_64-unknown-linux-musl.zip
+        PACKAGE_URL: https://github.com/sinofseven/oidc-jwks-converter/releases/download/v0.2.2/oidc-jwks-converter_v0.2.2_x86_64-unknown-linux-musl.zip
       run: |
         if command -v oidc-jwks-converter >/dev/null 2>&1; then
           echo "oidc-jwks-converter is already installed, skipping download"
